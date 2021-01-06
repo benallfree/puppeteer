@@ -103,8 +103,6 @@
     "typescript": "3.9.5"
   },
   "husky": {
-    "hooks": {
-      "commit-msg": "commitlint --env HUSKY_GIT_PARAMS"
-    }
+    "hooks": {}
   }
 }

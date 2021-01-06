@@ -21,7 +21,6 @@ import { CDPSession } from './Connection.js';
 import { FrameManager } from './FrameManager.js';
 import { HTTPRequest } from './HTTPRequest.js';
 import { HTTPResponse } from './HTTPResponse.js';
-import pluggable from './pluggable.js';
 
 /**
  * @public
@@ -268,7 +267,7 @@ export class NetworkManager extends EventEmitter {
     const frame = event.frameId
       ? this._frameManager.frame(event.frameId)
       : null;
-    const request = new (pluggable.HTTPRequest.get())(
+    const request = new HTTPRequest(
       this._client,
       frame,
       interceptionId,

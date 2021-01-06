@@ -1,4 +1,4 @@
-# Puppeteer Ehancements
+# Enchanted Puppeteer
 
 This is a fork of the mighty [Puppeteer](https://github.com/puppeteer/puppeteer) with support for multiple, cooperative request
 interception.
@@ -8,7 +8,7 @@ Cooperative request interception means that Puppeteer now supports multiple requ
 # Installation
 
 ```
-npm i benallfree/puppeteer@latest
+npm i benallfree/enchanted-puppeteer@latest
 ```
 
 # Basic example
