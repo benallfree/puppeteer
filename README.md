@@ -1,7 +1,7 @@
 # Enchanted Puppeteer
 
 This is a fork of the mighty [Puppeteer](https://github.com/puppeteer/puppeteer) with support for multiple, cooperative request
-interception.
+interceptions.
 
 Cooperative request interception means that Puppeteer now supports multiple request intercept handlers and they can all play nicely.
 

@@ -114,8 +114,8 @@ export class HTTPRequest {
   private _postData?: string;
   private _headers: Record<string, string> = {};
   private _frame: Frame;
-  private _interceptionRequestOverrides: ContinueRequestOverrides;
-  private _interceptionResponse: ResponseForRequest;
+  private _continueRequestOverrides: ContinueRequestOverrides;
+  private _responseForRequest: ResponseForRequest;
   private _abortErrorReason: ErrorReasons;
   private _shouldContinue: boolean;
   private _shouldRespond: boolean;
@@ -146,7 +146,7 @@ export class HTTPRequest {
     this._postData = event.request.postData;
     this._frame = frame;
     this._redirectChain = redirectChain;
-    this._interceptionRequestOverrides = {};
+    this._continueRequestOverrides = {};
     this._shouldContinue = true; // Continue by default
     this._shouldRespond = false;
     this._shouldAbort = false;
@@ -168,18 +168,18 @@ export class HTTPRequest {
    * if it is allowed to continue (ie, abort() isn't called). This is only
    * available in intercept mode.
    */
-  interceptionRequestOverrides(): ContinueRequestOverrides {
+  continueRequestOverrides(): ContinueRequestOverrides {
     assert(this._allowInterception, 'Request Interception is not enabled!');
-    return this._interceptionRequestOverrides;
+    return this._continueRequestOverrides;
   }
 
   /**
    * @returns the current response to send instead of allowing this
    * request to continue.
    */
-  interceptionResponse(): ResponseForRequest {
+  responseForRequest(): ResponseForRequest {
     assert(this._allowInterception, 'Request Interception is not enabled!');
-    return this._interceptionResponse;
+    return this._responseForRequest;
   }
 
   /**
@@ -212,15 +212,6 @@ export class HTTPRequest {
   shouldAbort(): boolean {
     assert(this._allowInterception, 'Request Interception is not enabled!');
     return this._shouldAbort;
-  }
-
-  /**
-   * @returns `true` if `abort()`, `continue()`, or `respond()` has been called
-   * at least once.
-   */
-  isInterceptionHandled(): boolean {
-    assert(this._allowInterception, 'Request Interception is not enabled!');
-    return this._interceptionHandled;
   }
 
   /**
@@ -406,7 +397,7 @@ export class HTTPRequest {
     // Request interception is not supported for data: urls.
     if (this._url.startsWith('data:')) return;
     assert(this._allowInterception, 'Request Interception is not enabled!');
-    this._interceptionRequestOverrides = overrides;
+    this._continueRequestOverrides = overrides;
     this._shouldContinue = true;
   }
 
@@ -418,12 +409,7 @@ export class HTTPRequest {
     );
 
     this._interceptionHandled = true;
-    const {
-      url,
-      method,
-      postData,
-      headers,
-    } = this._interceptionRequestOverrides;
+    const { url, method, postData, headers } = this._continueRequestOverrides;
     const postDataBinaryBase64 = postData
       ? Buffer.from(postData).toString('base64')
       : undefined;
@@ -476,7 +462,7 @@ export class HTTPRequest {
     // Mocking responses for dataURL requests is not currently supported.
     if (this._url.startsWith('data:')) return;
     assert(this._allowInterception, 'Request Interception is not enabled!');
-    this._interceptionResponse = response;
+    this._responseForRequest = response;
     this._shouldRespond = true;
   }
 
@@ -490,7 +476,7 @@ export class HTTPRequest {
     );
     this._interceptionHandled = true;
 
-    const response = this._interceptionResponse;
+    const response = this._responseForRequest;
     const responseBody: Buffer | null =
       response.body && helper.isString(response.body)
         ? Buffer.from(response.body)
