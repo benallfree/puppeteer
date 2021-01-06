@@ -21,6 +21,7 @@ import { CDPSession } from './Connection.js';
 import { FrameManager } from './FrameManager.js';
 import { DeferredRequestHandler, HTTPRequest } from './HTTPRequest.js';
 import { HTTPResponse } from './HTTPResponse.js';
+import pluggable from './pluggable.js';
 
 /**
  * @public
@@ -268,7 +269,7 @@ export class NetworkManager extends EventEmitter {
       ? this._frameManager.frame(event.frameId)
       : null;
     const deferredRequestHandlers: DeferredRequestHandler[] = [];
-    const request = new HTTPRequest(
+    const request = new (pluggable.HTTPRequest.get())(
       this._client,
       frame,
       interceptionId,
