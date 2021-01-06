@@ -1,9 +1,9 @@
 {
-  "name": "puppeteer",
+  "name": "enchanted-puppeteer",
   "version": "5.5.0-post",
   "description": "A high-level API to control headless Chrome over the DevTools Protocol",
   "main": "./cjs-entry.js",
-  "repository": "github:puppeteer/puppeteer",
+  "repository": "github:benallfree/enchanted-puppeteer",
   "engines": {
     "node": ">=10.18.1"
   },
