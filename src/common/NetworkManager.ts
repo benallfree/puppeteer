@@ -284,7 +284,7 @@ export class NetworkManager extends EventEmitter {
         .then(() => {
           if (request.shouldAbort()) return request.fulfillAbort();
           if (request.shouldRespond()) return request.fulfillRespond();
-          request.fulfillContinue();
+          return request.fulfillContinue();
         })
         .catch((error) => {
           debugError(error);
