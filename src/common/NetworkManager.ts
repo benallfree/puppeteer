@@ -280,17 +280,15 @@ export class NetworkManager extends EventEmitter {
     this._requestIdToRequest.set(event.requestId, request);
     this.emit(NetworkManagerEmittedEvents.Request, request);
     if (this._userRequestInterceptionEnabled) {
-      (() => {
-        Promise.all(deferredRequestHandlers.map((fn) => fn()))
-          .then(() => {
-            if (request.shouldAbort()) return request.fulfillAbort();
-            if (request.shouldRespond()) return request.fulfillRespond();
-            request.fulfillContinue();
-          })
-          .catch((error) => {
-            debugError(error);
-          });
-      })();
+      Promise.all(deferredRequestHandlers.map((fn) => fn()))
+        .then(() => {
+          if (request.shouldAbort()) return request.fulfillAbort();
+          if (request.shouldRespond()) return request.fulfillRespond();
+          request.fulfillContinue();
+        })
+        .catch((error) => {
+          debugError(error);
+        });
     }
   }
 
