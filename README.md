@@ -13,8 +13,10 @@ I try to keep this fork updated with official Puppeteer development.
 
 This fork is a drop-in replacement for Puppeteer. Simply install this package and it will override the official package.
 
+Every version >5.5.0 is supported.
+
 ```
-npm i benallfree/puppeteer@latest
+npm i benallfree/puppeteer#main
 ```
 
 # Basic Request Interception Usage
