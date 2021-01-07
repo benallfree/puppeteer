@@ -75,8 +75,8 @@ const puppeteer = require('puppeteer');
 # Async Request Interception Usage
 
 You may often have a need to perform async operations in during the request interception. Puppeteer
-automatically pauses request resolution until all handlers complete. With puppeteer, this includes
-waiting for all async operations to resolve.
+automatically pauses request resolution until all handlers complete. This now includes
+waiting for all async request handler operations to resolve.
 
 ```typescript
 const puppeteer = require('puppeteer');
@@ -89,8 +89,8 @@ const puppeteer = require('puppeteer');
   await page.setRequestInterception(true);
 
   /**
-   * Async example. Mupeteer will not fulfill the request until this deferred operation
-   * has been completed
+   * Async example. Pupeteer will not fulfill the request until this and all deferred operations
+   * has been completed.
    */
   page.on('request', (req) => {
     req.defer(async () => {
