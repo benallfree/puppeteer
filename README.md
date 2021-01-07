@@ -7,10 +7,14 @@ Cooperative request interception means that Puppeteer now supports multiple requ
 
 Please refer to the official Puppeteer documentation.
 
+I try to keep this fork updated with official Puppeteer development.
+
 # Installation
 
+This fork is a drop-in replacement for Puppeteer. Simply install this package and it will override the official package.
+
 ```
-npm i benallfree/enchanted-puppeteer@latest
+npm i benallfree/puppeteer@latest
 ```
 
 # Basic Request Interception Usage

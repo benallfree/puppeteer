@@ -1,5 +1,5 @@
 {
-  "name": "enchanted-puppeteer",
+  "name": "puppeteer",
   "version": "5.5.0-post",
   "description": "A high-level API to control headless Chrome over the DevTools Protocol",
   "main": "./cjs-entry.js",
