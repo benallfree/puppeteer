@@ -104,12 +104,14 @@ class ChromeLauncher implements ProductLauncher {
     }
 
     let chromeExecutable = executablePath;
-    if (os.arch() === 'arm64') {
-      chromeExecutable = '/usr/bin/chromium-browser';
-    } else if (!executablePath) {
-      const { missingText, executablePath } = resolveExecutablePath(this);
-      if (missingText) throw new Error(missingText);
-      chromeExecutable = executablePath;
+    if (!executablePath) {
+      if (os.arch() === 'arm64') {
+        chromeExecutable = '/usr/bin/chromium-browser';
+      } else {
+        const { missingText, executablePath } = resolveExecutablePath(this);
+        if (missingText) throw new Error(missingText);
+        chromeExecutable = executablePath;
+      }
     }
 
     const usePipe = chromeArguments.includes('--remote-debugging-pipe');
@@ -516,6 +518,9 @@ class FirefoxLauncher implements ProductLauncher {
       // Prevent various error message on the console
       // jest-puppeteer asserts that no error message is emitted by the console
       'network.cookie.cookieBehavior': 0,
+
+      // Disable experimental feature that is only available in Nightly
+      'network.cookie.sameSite.laxByDefault': false,
 
       // Do not prompt for temporary redirects
       'network.http.prompt-temp-redirect': false,
