@@ -3,7 +3,7 @@
   "version": "5.5.0-post",
   "description": "A high-level API to control headless Chrome over the DevTools Protocol",
   "main": "./cjs-entry.js",
-  "repository": "github:benallfree/puppeteer",
+  "repository": "github:puppeteer/puppeteer",
   "engines": {
     "node": ">=10.18.1"
   },
@@ -103,6 +103,8 @@
     "typescript": "3.9.5"
   },
   "husky": {
-    "hooks": {}
+    "hooks": {
+      "commit-msg": "commitlint --env HUSKY_GIT_PARAMS"
+    }
   }
 }
