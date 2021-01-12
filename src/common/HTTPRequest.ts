@@ -106,6 +106,7 @@ export class HTTPRequest {
   private _client: CDPSession;
   private _isNavigationRequest: boolean;
   private _allowInterception: boolean;
+  private _allowCooperativeInterceptionMode: boolean;
   private _interceptionHandled = false;
   private _url: string;
   private _resourceType: string;
@@ -120,7 +121,7 @@ export class HTTPRequest {
   private _shouldContinue: boolean;
   private _shouldRespond: boolean;
   private _shouldAbort: boolean;
-  private _deferredRequestHandlers: DeferredRequestHandler[];
+  private _deferredRequestHandlersRef: DeferredRequestHandler[];
 
   /**
    * @internal
@@ -130,6 +131,7 @@ export class HTTPRequest {
     frame: Frame,
     interceptionId: string,
     allowInterception: boolean,
+    allowCooperativeInterceptionMode: boolean,
     event: Protocol.Network.RequestWillBeSentEvent,
     redirectChain: HTTPRequest[],
     deferredRequestHandlersRef: DeferredRequestHandler[]
@@ -140,6 +142,7 @@ export class HTTPRequest {
       event.requestId === event.loaderId && event.type === 'Document';
     this._interceptionId = interceptionId;
     this._allowInterception = allowInterception;
+    this._allowCooperativeInterceptionMode = allowCooperativeInterceptionMode;
     this._url = event.request.url;
     this._resourceType = event.type.toLowerCase();
     this._method = event.request.method;
@@ -150,7 +153,7 @@ export class HTTPRequest {
     this._shouldContinue = true; // Continue by default
     this._shouldRespond = false;
     this._shouldAbort = false;
-    this._deferredRequestHandlers = deferredRequestHandlersRef;
+    this._deferredRequestHandlersRef = deferredRequestHandlersRef;
 
     for (const key of Object.keys(event.request.headers))
       this._headers[key.toLowerCase()] = event.request.headers[key];
@@ -164,64 +167,106 @@ export class HTTPRequest {
   }
 
   /**
+   * @remarks
+   * Available only in Cooperative Intercept Mode.
+   *
    * @returns the current ContinueRequestOverrides that will be applied to this
    * if it is allowed to continue (ie, abort() isn't called). This is only
    * available in intercept mode.
    */
   continueRequestOverrides(): ContinueRequestOverrides {
-    assert(this._allowInterception, 'Request Interception is not enabled!');
+    assert(
+      this._allowCooperativeInterceptionMode,
+      'Cooperative Request Interception is not enabled!'
+    );
     return this._continueRequestOverrides;
   }
 
   /**
+   * @remarks
+   * Available only in Cooperative Intercept Mode.
+   *
    * @returns the current response to send instead of allowing this
    * request to continue.
    */
   responseForRequest(): ResponseForRequest {
-    assert(this._allowInterception, 'Request Interception is not enabled!');
+    assert(
+      this._allowCooperativeInterceptionMode,
+      'Cooperative Request Interception is not enabled!'
+    );
     return this._responseForRequest;
   }
 
   /**
+   * @remarks
+   * Available only in Cooperative Intercept Mode.
+   *
    * @returns the current reason for aborting the request
    */
   abortErrorReason(): ErrorReasons {
-    assert(this._allowInterception, 'Request Interception is not enabled!');
+    assert(
+      this._allowCooperativeInterceptionMode,
+      'Cooperative Request Interception is not enabled!'
+    );
     return this._abortErrorReason;
   }
 
   /**
+   * @remarks
+   * Available only in Cooperative Intercept Mode.
+   *
    * @returns `true` if `continue()` has been called at least once.
    */
   shouldContinue(): boolean {
-    assert(this._allowInterception, 'Request Interception is not enabled!');
+    assert(
+      this._allowCooperativeInterceptionMode,
+      'Cooperative Request Interception is not enabled!'
+    );
     return this._shouldContinue;
   }
 
   /**
+   * @remarks
+   * Available only in Cooperative Intercept Mode.
+
    * @returns `true` if `respond()` has been called at least once.
    */
   shouldRespond(): boolean {
-    assert(this._allowInterception, 'Request Interception is not enabled!');
+    assert(
+      this._allowCooperativeInterceptionMode,
+      'Cooperative Request Interception is not enabled!'
+    );
     return this._shouldRespond;
   }
 
   /**
+   * @remarks
+   * Available only in Cooperative Intercept Mode.
+
    * @returns `true` if `abort()` has been called at least once.
    */
   shouldAbort(): boolean {
-    assert(this._allowInterception, 'Request Interception is not enabled!');
+    assert(
+      this._allowCooperativeInterceptionMode,
+      'Cooperative Request Interception is not enabled!'
+    );
     return this._shouldAbort;
   }
 
   /**
-   * @returns Adds an async (deferred) request handler to the processing queue.
+   * @remarks
+   * Internal method available only in Cooperative Intercept Mode.
+
+   * Adds an async (deferred) request handler to the processing queue.
    * Deferred handlers are not guaranteed to execute in any particular order,
    * but they are guarnateed to execute before returning control to Chromium.
    */
   defer(fn: DeferredRequestHandler): void {
-    assert(this._allowInterception, 'Request Interception is not enabled!');
-    this._deferredRequestHandlers.push(fn);
+    assert(
+      this._allowCooperativeInterceptionMode,
+      'Cooperative Request Interception is not enabled!'
+    );
+    this._deferredRequestHandlersRef.push(fn);
   }
 
   /**
@@ -351,33 +396,6 @@ export class HTTPRequest {
    *
    * Exception is immediately thrown if the request interception is not enabled.
    *
-   * Consider that other `page.on('request')`
-   * handlers may have already called `continue()`, `abort()`, or `respond()`,
-   * or may call them after your handler runs.
-   *
-   * Your handler is guaranteed to run regardless of actions by previous
-   * handlers. The ultimate action of the response follows these rules:
-   *
-   * * Use `interceptionRequestOverrides()` to inspect any previous
-   * values other handlers may have written using `continue()`. It is your responsibility
-   * to merge/override existing values when calling `continue()`.
-   *
-   * * Use `interceptionResponse()` to inspect any previous
-   * response other handlers may have written using `respond()`. It is your responsibility
-   * to merge/override existing values when calling `respond()`.
-
-   * * `abort()`: The request will ultimately be aborted, even if some handlers have
-   * called `continue()` or `respond()`.
-   *
-   * * `respond()`:  A custom response will ultimately be sent instead of continuing,
-   * even if some handlers have called `continue()`.
-   *
-   * * `continue()`: The request will be continued only if `abort()` and `respond()` have
-   * not been called by any handler.
-   *
-   * * If no handler has called `abort()`, `respond()`, or `continue()`, Puppeteer will
-   * assume `continue()`.
-   **
    * @example
    * ```js
    * await page.setRequestInterception(true);
@@ -393,15 +411,23 @@ export class HTTPRequest {
    *
    * @param overrides - optional overrides to apply to the request.
    */
-  continue(overrides: ContinueRequestOverrides = {}): void {
+  continue(overrides: ContinueRequestOverrides = {}): Promise<void> {
     // Request interception is not supported for data: urls.
     if (this._url.startsWith('data:')) return;
     assert(this._allowInterception, 'Request Interception is not enabled!');
     this._continueRequestOverrides = overrides;
     this._shouldContinue = true;
+    if (this._allowCooperativeInterceptionMode) {
+      return Promise.resolve();
+    }
+    return this.fulfillContinue();
   }
 
   async fulfillContinue(): Promise<void> {
+    assert(
+      this._shouldContinue,
+      `Internal error: continue() was never called!`
+    );
     assert(this._allowInterception, 'Request Interception is not enabled!');
     assert(
       !this._interceptionHandled,
@@ -458,12 +484,16 @@ export class HTTPRequest {
    *
    * @param response - the response to fulfill the request with.
    */
-  respond(response: ResponseForRequest): void {
+  respond(response: ResponseForRequest): Promise<void> {
     // Mocking responses for dataURL requests is not currently supported.
     if (this._url.startsWith('data:')) return;
     assert(this._allowInterception, 'Request Interception is not enabled!');
     this._responseForRequest = response;
     this._shouldRespond = true;
+    if (this._allowCooperativeInterceptionMode) {
+      return Promise.resolve();
+    }
+    return this.fulfillRespond();
   }
 
   async fulfillRespond(): Promise<void> {
@@ -520,14 +550,17 @@ export class HTTPRequest {
    *
    * @param errorCode - optional error code to provide.
    */
-  abort(errorCode: ErrorCode = 'failed'): void {
+  abort(errorCode: ErrorCode = 'failed'): Promise<void> {
     // Request interception is not supported for data: urls.
     if (this._url.startsWith('data:')) return;
     const errorReason = errorReasons[errorCode];
     assert(errorReason, 'Unknown error code: ' + errorCode);
     assert(this._allowInterception, 'Request Interception is not enabled!');
     this._shouldAbort = true;
-    this._abortErrorReason = errorReason;
+    if (this._allowCooperativeInterceptionMode) {
+      return Promise.resolve();
+    }
+    return this.fulfillAbort();
   }
 
   async fulfillAbort(): Promise<void> {
